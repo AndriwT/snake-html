@@ -1,7 +1,7 @@
 // HW
 // Expected 2 days
 
-// Update the score when eating a fruit
+// Update the score when eating a fruit - DONE
 // Game Over Screen with restart button
 // When Pressing the SpaceBar it pauses the game and shows Paused on screen
 
@@ -19,7 +19,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
 }
 
-let SPEED = 20;
+let SPEED = 10;
 
 let score = 0;
 
@@ -83,11 +83,13 @@ function createSnakeElement() {
 }
 
 function clearContainer(gameContainer) {
-  let children = gameContainer.children;
-
-  for (let child of children) {
-    child.remove();
-  }
+  // let children = gameContainer.children;
+  console.log("before", gameContainer.children);
+  // for (let child of children) {
+  //   child.remove();
+  // }
+  gameContainer;
+  console.log("after", gameContainer.children);
 }
 
 // function didSnakeEatFruit() {
@@ -170,22 +172,79 @@ function updateScore() {
   scoreEl.innerText = score;
 }
 
-async function main() {
+function onRestart() {
+  console.log("onRestart fired!");
+  let modal = document.querySelector("#modal");
+
+  modal.remove();
+  main();
+}
+
+function gameOver(gameContainer) {
+  console.log("game over");
+  createGameOverModal(gameContainer);
+}
+
+function createGameOverModal(gameContainer) {
+  const modalEl = document.createElement("div");
+  modalEl.style.backgroundColor = "gray";
+  modalEl.style.position = "absolute";
+  modalEl.style.top = "40%";
+  modalEl.style.left = "40%";
+  modalEl.style.display = "flex";
+  modalEl.style.flexDirection = "column";
+  modalEl.style.justifyContent = "center";
+  modalEl.style.alignItems = "center";
+  modalEl.style.fontSize = "50px";
+  modalEl.id = "modal";
+
+  const text = document.createElement("h4");
+  text.innerText = "GAME OVER";
+
+  const restartButtonEl = document.createElement("button");
+  restartButtonEl.innerText = "Restart";
+  restartButtonEl.addEventListener("click", () => {
+    modalEl.remove();
+    clearContainer(gameContainer);
+
+    bodyPiecesEl.splice(0, bodyPiecesEl.length);
+
+    snakeEl = null;
+    fruitEl = null;
+
+    console.log(bodyPiecesEl);
+    main();
+  });
+
+  modalEl.appendChild(text);
+  modalEl.appendChild(restartButtonEl);
+  document.body.appendChild(modalEl);
+}
+
+let shouldGameRun = true;
+
+let snakeEl = null;
+
+let fruitEl = null;
+
+const bodyPiecesEl = [];
+
+async function main(resume) {
   const gameContainer = document.querySelector("#game");
 
-  const snakeEl = createSnakeElement();
-  gameContainer.appendChild(snakeEl);
+  if (!resume) {
+    snakeEl = createSnakeElement();
+    gameContainer.appendChild(snakeEl);
 
-  const fruitEl = createFruitElement();
-  gameContainer.appendChild(fruitEl);
+    fruitEl = createFruitElement();
+    gameContainer.appendChild(fruitEl);
+  }
 
-  const bodyPiecesEl = [];
-
-  while (true) {
+  while (shouldGameRun) {
     checkHitDetectionForWalls(gameContainer);
     const hitSelf = checkIfHitItself();
     if (hitSelf) {
-      alert("YOU LOST");
+      gameOver(gameContainer);
       break;
     }
     const ateFruit = checkIfAteFruit();
@@ -244,8 +303,16 @@ window.addEventListener("keydown", (event) => {
       yDirection = -1;
       xDirection = 0;
       break;
+    case " ":
+      if (shouldGameRun === true) {
+        shouldGameRun = false;
+      } else if (shouldGameRun === false) {
+        shouldGameRun = true;
+        main("resume");
+      }
+      break;
     default:
-      console.log("Unknown key pressed: ", e.key);
+      console.log("Unknown key pressed: ", event.key);
   }
 });
 
