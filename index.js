@@ -2,8 +2,8 @@
 // Expected 2 days
 
 // Update the score when eating a fruit - DONE
-// Game Over Screen with restart button
-// When Pressing the SpaceBar it pauses the game and shows Paused on screen
+// Game Over Screen with restart button - kind of done
+// When Pressing the SpaceBar it pauses the game and shows Paused on screen - DONE
 
 function sleep(time) {
   return new Promise((resolve) => {
@@ -19,7 +19,7 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min) + min); // The maximum is exclusive and the minimum is inclusive
 }
 
-let SPEED = 10;
+let SPEED = 20;
 
 let score = 0;
 
@@ -54,7 +54,7 @@ let yDirection = 0;
 const snake = new Snake();
 const fruit = new Fruit();
 
-const snakeBodyPieces = [];
+let snakeBodyPieces = [];
 
 function createFruitElement() {
   const el = document.createElement("div");
@@ -65,7 +65,7 @@ function createFruitElement() {
   el.style.left = fruit.x + "px";
   el.style.top = fruit.y + "px";
   el.style.border = "0px solid white";
-  // el.style.borderRadius = "50%";
+  el.style.borderRadius = "50%";
   return el;
 }
 
@@ -82,14 +82,34 @@ function createSnakeElement() {
   return el;
 }
 
-function clearContainer(gameContainer) {
-  // let children = gameContainer.children;
-  console.log("before", gameContainer.children);
-  // for (let child of children) {
-  //   child.remove();
-  // }
-  gameContainer;
-  console.log("after", gameContainer.children);
+// doFoo.onclick = () => {
+//   const myNode = document.getElementById("foo");
+//   while (myNode.firstChild) {
+//     myNode.removeChild(myNode.lastChild);
+//   }
+// };
+
+function clearContainer() {
+  let scoreEl = document.querySelector("#score");
+  scoreEl.innerText = "0";
+
+  for (let i = 0; i < bodyPiecesEl.length; i++) {
+    const bodyPieceEl = bodyPiecesEl[i];
+    bodyPieceEl.remove();
+  }
+
+  bodyPiecesEl = [];
+  snakeBodyPieces = [];
+
+  snake.x = 0;
+  snake.y = 0;
+
+  // fruitEl.remove();
+
+  // snakeEl = null;
+  // fruitEl = null;
+
+  return;
 }
 
 // function didSnakeEatFruit() {
@@ -172,14 +192,6 @@ function updateScore() {
   scoreEl.innerText = score;
 }
 
-function onRestart() {
-  console.log("onRestart fired!");
-  let modal = document.querySelector("#modal");
-
-  modal.remove();
-  main();
-}
-
 function gameOver(gameContainer) {
   console.log("game over");
   createGameOverModal(gameContainer);
@@ -187,8 +199,10 @@ function gameOver(gameContainer) {
 
 function createGameOverModal(gameContainer) {
   const modalEl = document.createElement("div");
-  modalEl.style.backgroundColor = "gray";
+  modalEl.style.backgroundColor = "rgb(0 201 210 / 47%)";
   modalEl.style.position = "absolute";
+  modalEl.style.height = "200px";
+  modalEl.style.width = "500px";
   modalEl.style.top = "40%";
   modalEl.style.left = "40%";
   modalEl.style.display = "flex";
@@ -196,56 +210,100 @@ function createGameOverModal(gameContainer) {
   modalEl.style.justifyContent = "center";
   modalEl.style.alignItems = "center";
   modalEl.style.fontSize = "50px";
+  modalEl.style.border = "0px solid black";
+  modalEl.style.borderRadius = "15px";
   modalEl.id = "modal";
 
   const text = document.createElement("h4");
+  text.style.margin = "0px";
   text.innerText = "GAME OVER";
 
   const restartButtonEl = document.createElement("button");
   restartButtonEl.innerText = "Restart";
+
   restartButtonEl.addEventListener("click", () => {
+    console.log("click");
     modalEl.remove();
-    clearContainer(gameContainer);
-
-    bodyPiecesEl.splice(0, bodyPiecesEl.length);
-
-    snakeEl = null;
-    fruitEl = null;
-
-    console.log(bodyPiecesEl);
-    main();
+    clearContainer();
+    score = 0;
+    xDirection = 1;
+    yDirection = 0;
+    gameState = "RUNNING";
   });
 
+  gameState = "GAME_OVER";
   modalEl.appendChild(text);
   modalEl.appendChild(restartButtonEl);
   document.body.appendChild(modalEl);
 }
 
+function gamePaused() {
+  const pauseIconEl = document.createElement("div");
+
+  pauseIconEl.style.position = "absolute";
+  pauseIconEl.style.height = "100px";
+  pauseIconEl.style.width = "200px";
+  pauseIconEl.style.backgroundColor = "rgb(98 50 182 / 45%)";
+  pauseIconEl.style.top = "40%";
+  pauseIconEl.style.left = "40%";
+  pauseIconEl.style.display = "flex";
+  pauseIconEl.style.justifyContent = "center";
+  pauseIconEl.style.alignItems = "center";
+  pauseIconEl.style.border = "thick solid black";
+  pauseIconEl.style.borderRadius = "15px";
+  window.addEventListener("keydown", (event) => {
+    switch (event.key) {
+      case " ":
+        pauseIconEl.remove();
+      default:
+        console.log("Unknown key pressed: ", event.key);
+    }
+  });
+
+  const modalEl = document.createElement("div");
+  modalEl.className = "modal-card";
+
+  const pauseText = document.createElement("h4");
+  pauseText.style.fontSize = "30px";
+  pauseText.style.color = "black";
+  pauseText.innerText = "PAUSED";
+
+  modalEl.appendChild(pauseText);
+
+  pauseIconEl.appendChild(modalEl);
+  document.body.appendChild(pauseIconEl);
+}
+let gameState = "RUNNING"; // RUNNING, PAUSED, GAME_OVER
+
 let shouldGameRun = true;
+let isPaused = false;
+let isGameOver = false;
 
 let snakeEl = null;
-
 let fruitEl = null;
 
-const bodyPiecesEl = [];
+let bodyPiecesEl = [];
 
-async function main(resume) {
+async function main() {
   const gameContainer = document.querySelector("#game");
 
-  if (!resume) {
-    snakeEl = createSnakeElement();
-    gameContainer.appendChild(snakeEl);
+  snakeEl = createSnakeElement();
+  gameContainer.appendChild(snakeEl);
 
-    fruitEl = createFruitElement();
-    gameContainer.appendChild(fruitEl);
-  }
+  fruitEl = createFruitElement();
+  gameContainer.appendChild(fruitEl);
 
   while (shouldGameRun) {
+    if (gameState === "PAUSED" || gameState === "GAME_OVER") {
+      await sleep(50);
+      continue;
+    }
+
     checkHitDetectionForWalls(gameContainer);
     const hitSelf = checkIfHitItself();
     if (hitSelf) {
       gameOver(gameContainer);
-      break;
+      continue;
     }
     const ateFruit = checkIfAteFruit();
 
@@ -304,11 +362,11 @@ window.addEventListener("keydown", (event) => {
       xDirection = 0;
       break;
     case " ":
-      if (shouldGameRun === true) {
-        shouldGameRun = false;
-      } else if (shouldGameRun === false) {
-        shouldGameRun = true;
-        main("resume");
+      if (gameState === "RUNNING") {
+        gamePaused();
+        gameState = "PAUSED";
+      } else if (gameState === "PAUSED") {
+        gameState = "RUNNING";
       }
       break;
     default:
